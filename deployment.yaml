@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidekiq-worker
+  labels:
+    app: sidekiq-worker
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: sidekiq-worker
+  template:
+    metadata:
+      labels:
+        app: sidekiq-worker
+    spec:
+      terminationGracePeriodSeconds: 600
+      containers:
+        - name: sidekiq
+          image: registry.example.com/app:1.42.0
+          command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+          env:
+            - name: SIDEKIQ_DRAIN_SECONDS
+              value: "540"
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: redis-url
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "/app/bin/sidekiq-prestop.sh"]
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              memory: "1Gi"

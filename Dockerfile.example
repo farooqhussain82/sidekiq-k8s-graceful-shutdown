@@ -1,0 +1,6 @@
+# Dockerfile excerpt: copy the drain script and run Sidekiq as PID 1 (exec form).
+COPY bin/sidekiq-prestop.sh /app/bin/sidekiq-prestop.sh
+RUN chmod +x /app/bin/sidekiq-prestop.sh
+
+# Exec form: Sidekiq is PID 1 and receives signals directly.
+CMD ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
